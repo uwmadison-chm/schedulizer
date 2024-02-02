@@ -19,25 +19,25 @@ from itertools import starmap
 
 class Time:
     def __init__(self, hours=0, minutes=0):
-        self._minutes = hours * 60 + minutes
+        self._total_minutes = hours * 60 + minutes
 
     @property
     def hours(self):
-        return (self._minutes // 60) % 24
+        return (self._total_minutes // 60) % 24
     
     @property
     def minutes(self):
-        return self._minutes % 60
+        return self._total_minutes % 60
     
     @property
     def total_minutes(self):
-        return self._minutes
+        return self._total_minutes
     
     def __repr__(self):
         return f'{self.hours}:{str(self.minutes).zfill(2)}'        
     
 def schedulize(start: Time,
-               end: Time,
+               num_alerts: int,
                block_len: int,
                min_separation: int
 ) -> list[Time]:
@@ -46,8 +46,9 @@ def schedulize(start: Time,
     Args:
         start:
             A Time object indicating the start of the time range
-        end:
-            A Time object indicating the end of the time range
+        num_alerts:
+            An integer representing the number of alerts / blocks
+            in the schedule.
         block_len:
             An integer representing the length of the block in
             minutes in which each alert may be sent.
@@ -58,12 +59,12 @@ def schedulize(start: Time,
     Returns:
         A list of Time objects representing the alert schedule.
     """
+
+    end = Time(0, start.total_minutes + block_len * num_alerts)
+
+    time_blocks = [(x, x + block_len) \
+                   for x in range(start.total_minutes, end.total_minutes, block_len)]
     
-    time_blocks = []
-
-    for minutes in range(start.total_minutes, end.total_minutes, block_len):
-        time_blocks.append((minutes, minutes + block_len))
-
     time_pts = list(starmap(get_random_time, time_blocks))
 
     while not are_valid_times(time_pts, min_separation):
