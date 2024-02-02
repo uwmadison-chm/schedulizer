@@ -1,25 +1,81 @@
+"""Script to generate pseudorandom EMA schedules.
+
+Main function schedulize takes a start Time, end Time, block length in minutes,
+and a minumum separation between alerts in minutes. It returns an alert schedule
+represented as a list of Times.
+
+Usage example:
+
+start_time = Time(7,30)
+end_time = Time(19,30)
+block_len = 120
+min_separation = 30
+
+schedule = schedulize(start_time, end_time, block_len, min_separation)
+"""
+
+from random import randint
+from itertools import starmap
+
 class Time:
-    def __init__(self, hours, minutes):
-        if hours not in range(0, 24):
-            raise ValueError('hours must be in the range [0..23]')
-        if minutes not in range(0, 60):
-            raise ValueError('minutes must be in the range [0..59]')
+    def __init__(self, hours=0, minutes=0):
         self._minutes = hours * 60 + minutes
 
-    def __lt__(x,y):
-        return x._minutes < y._minutes
-        
-    def __gt__(x,y):
-        return x._minutes > y._minutes
+    @property
+    def hours(self):
+        return (self._minutes // 60) % 24
     
-    def __eq__(x,y):
-        return x._minutes == y._minutes
+    @property
+    def minutes(self):
+        return self._minutes % 60
+    
+    @property
+    def total_minutes(self):
+        return self._minutes
     
     def __repr__(self):
-        return f'{self._minutes // 60}:{str(self._minutes % 60).zfill(2)}'        
+        return f'{self.hours}:{str(self.minutes).zfill(2)}'        
+    
+def schedulize(start: Time,
+               end: Time,
+               block_len: int,
+               min_separation: int
+) -> list[Time]:
+    """Generates a pseudorandom EMA schedule given constraints.
+    
+    Args:
+        start:
+            A Time object indicating the start of the time range
+        end:
+            A Time object indicating the end of the time range
+        block_len:
+            An integer representing the length of the block in
+            minutes in which each alert may be sent.
+        min_separation:
+            An integer representing the minumum amount of separation
+            in minutes between consecutive alerts.
 
-def schedulize(start: Time, end: Time):
-    if not (isinstance(start, Time) and isinstance(end, Time)):
-        raise TypeError("start and end must be instances of Time")
+    Returns:
+        A list of Time objects representing the alert schedule.
+    """
     
+    time_blocks = []
+
+    for minutes in range(start.total_minutes, end.total_minutes, block_len):
+        time_blocks.append((minutes, minutes + block_len))
+
+    time_pts = list(starmap(get_random_time, time_blocks))
+
+    while not are_valid_times(time_pts, min_separation):
+        time_pts = list(starmap(get_random_time, time_blocks))
     
+    return time_pts
+
+def get_random_time(start_minutes: int, end_minutes: int) -> Time:
+    rand_minutes = randint(start_minutes, end_minutes)
+    return Time(0,rand_minutes)
+
+def are_valid_times(times: list[Time], min_separation: int) -> bool:
+    separations = [j.total_minutes - i.total_minutes for i, j in \
+             zip(times[:-1], times[1:])]
+    return all(x >= min_separation for x in separations)
