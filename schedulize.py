@@ -14,8 +14,8 @@ min_separation = 30
 schedule = schedulize(start_time, end_time, block_len, min_separation)
 """
 
-from random import randint
-from itertools import starmap
+import random
+import itertools
 
 class Time:
     def __init__(self, hours=0, minutes=0):
@@ -65,15 +65,15 @@ def schedulize(start: Time,
     time_blocks = [(x, x + block_len) \
                    for x in range(start.total_minutes, end.total_minutes, block_len)]
     
-    time_pts = list(starmap(get_random_time, time_blocks))
+    time_pts = list(itertools.starmap(get_random_time, time_blocks))
 
     while not are_valid_times(time_pts, min_separation):
-        time_pts = list(starmap(get_random_time, time_blocks))
+        time_pts = list(itertools.starmap(get_random_time, time_blocks))
     
     return time_pts
 
 def get_random_time(start_minutes: int, end_minutes: int) -> Time:
-    rand_minutes = randint(start_minutes, end_minutes)
+    rand_minutes = random.randint(start_minutes, end_minutes)
     return Time(0,rand_minutes)
 
 def are_valid_times(times: list[Time], min_separation: int) -> bool:
