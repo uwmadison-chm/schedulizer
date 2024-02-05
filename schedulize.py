@@ -67,6 +67,7 @@ def schedulize(start: Time,
     
     time_pts = list(itertools.starmap(get_random_time, time_blocks))
 
+    # keep randomizing until we get time points that satisfy constraint
     while not are_valid_times(time_pts, min_separation):
         time_pts = list(itertools.starmap(get_random_time, time_blocks))
     
